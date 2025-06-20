@@ -5,6 +5,6 @@ if command -v pip &> /dev/null; then
 else
     pip3 install -r requirements.txt
 fi
-export AWS_PROFILE=test_profile_name;aws sso login
+export AWS_PROFILE=stg_profile_name;aws sso login
 mkdir -p ~/.connect_to_fargate/log
 ./connect_to_fargate.py "$@"
