@@ -16,7 +16,7 @@
 ### 手動でAWSアクセス資格取得確認
 
 ```
-$ aws configure --profile "profile_name"
+aws configure --profile "profile_name"
 ```
 
 `profile_name`は自分のプロフィールをご利用ください。次の説明から`profile_name`は自分のプロファイル名を使用するものとします。
@@ -25,7 +25,7 @@ $ aws configure --profile "profile_name"
 ### ブラウザでAWS SSO画面でログインしてAWSアクセス資格取得
 
 ```
-$ aws configure sso --profile profile_name
+aws configure sso --profile profile_name
 ```
 
 `profile_name`は自分のプロフィールをご利用ください。
@@ -42,7 +42,7 @@ $ aws configure sso --profile profile_name
 `~/.aws/config`で設定情報を確認できます。
 
 ```
-vi ~/.aws/config
+cat ~/.aws/config
 ```
 
 ### Profileを設定して、sso login する
@@ -52,7 +52,7 @@ vi ~/.aws/config
 #### プロフィールを指定してログイン
 
 ```
-$ export AWS_PROFILE=profile_name; aws sso login
+export AWS_PROFILE=profile_name; aws sso login
 ```
 
 `profile_name`は自分のプロフィールをご利用ください。
@@ -61,11 +61,13 @@ $ export AWS_PROFILE=profile_name; aws sso login
 
 #### シェルが起動するたびにその変数が自動的にプロフィール指定
 
+**オプション**設定です。検証環境、production環境のいずれかの一つに毎度設定なしでアクセスする方法
+
 bash 環境
 
 ```
-$ echo 'export AWS_PROFILE=profile_name' >> ~/.bashrc
-$ source ~/.bashrc
+echo 'export AWS_PROFILE=profile_name' >> ~/.bashrc
+source ~/.bashrc
 ```
 
 zsh 環境
@@ -80,7 +82,7 @@ source ~/.zshrc
 ### AWSアクセス資格取得確認
 
 ```
-$ aws configure list
+aws configure list
 ```
 
 ```
@@ -92,46 +94,129 @@ secret_key     ****************EFGH   shared-credentials-file
     region           ap-northeast-1       config-file    ~/.aws/config
 ```
 
-### pipコマンド
+### fargate　アクセルツールインストール
+
+#### アクセスsampleファイル生成
+
+```
+cp [sample]stg_fargate_connection.sh stg_fargate_connection.sh
+cp [sample]pro_fargate_connection.sh pro_fargate_connection.sh
+```
+
+各ファイルを開いて下記の部分の`pro_profile_name`や`stg_profile_name`に`cat ~/.aws/config`で確認できる自分のprofil_nameを設定してください。
+
+```
+export AWS_PROFILE=pro_profile_name;aws sso login
+```
+
+```
+export AWS_PROFILE=stg_profile_name;aws sso login
+```
+
+#### 接続テスト
+
+```
+sh stg_fargate_connection.sh
+```
+
+```
+sh pro_fargate_connection.sh
+```
+
+#### 全域コマンド実行ファイルに登録
+
+```
+rm /usr/local/bin/stg_fargate_connection.sh
+ln -s $(pwd)/stg_fargate_connection.sh /usr/local/bin
+```
+
+```
+rm /usr/local/bin/pro_fargate_connection.sh
+ln -s $(pwd)/pro_fargate_connection.sh /usr/local/bin
+```
+
+#### シンボリックリンク生成確認
+
+```
+ls -l /usr/local/bin/stg_fargate_connection.sh
+```
+
+```
+ls -l /usr/local/bin/pro_fargate_connection.sh
+```
+
+#### 実行権限追加
+
+```
+chmod +x /usr/local/bin/stg_fargate_connection.sh
+```
+
+```
+chmod +x /usr/local/bin/pro_fargate_connection.sh
+```
+
+#### コマンドで実行
+
+```
+stg_fargate_connection.sh
+```
+
+```
+pro_fargate_connection.sh
+```
+
+### fargateアクセスツール設定詳細
+
+`stg_fargate_connection.sh`, `pro_fargate_connection.sh`の内部コードの説明です。手動で設定する必要はありません。
+
+#### virtual environment 設定
+
+pythonは全域空間を汚染することなく、プロジェクトごとに異なる依存関係を管理するために、仮想環境を使用します。
+これにより、異なるプロジェクト間でライブラリのバージョンが競合する問題を防ぎ、開発環境をより安全かつ効率的に管理することができます。
+
+```
+python -m venv ./venv
+source ./venv/bin/activate
+```
+
+#### pipコマンド
 
 pythonのインストールが必要
 
 MacOSの場合は`pip`を`pip3`で使用している場合があります。
 
-### モジュールのインストール
+#### モジュールのインストール
+
+このプロジェクトのフォルダのルートパスで依存ファイルをインストールしてください。
 
 ```
-$ pip install -r requirements.txt
+pip install -r requirements.txt
 ```
 
-### Session Manager プラグインインストール(下記URLはMacOSでのインストール方法)
+#### ログディレクトリ作成(任意)
+
+```
+mkdir -p ~/.connect_to_fargate/log
+```
+
+### 参考になる資料
+
+#### Session Manager プラグインインストール(下記URLはMacOSでのインストール方法)
 
 https://docs.aws.amazon.com/ja_jp/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html#install-plugin-macos
 
-### aws cli のインストール
+#### aws cli のインストール
 
 https://docs.aws.amazon.com/ja_jp/cli/latest/userguide/getting-started-install.html
 
-### リンク作成
+## スクリプト実行する
 
 ```
-$ sudo ln -s $(pwd)/connect_to_fargate.py /usr/local/bin
+stg_fargate_connection.sh
 ```
 
-初期設定で一回実行する必要があります。一回設定されてからは再度設定する必要はありません。
-
-### ログディレクトリ作成(任意)
-
 ```
-$ mkdir -p ~/.connect_to_fargate/log
-```
-
-初期設定で一回実行する必要があります。一回設定されてからは再度設定する必要はありません。
-
-### スクリプト実行する
-
-```
-$ connect_to_fargate.py
+pro_fargate_connection.sh
 ```
 
 このコマンドを実行する前にAWSからアクセス資格を取得する必要があります。`aws sso login`の説明をご参考ください。
@@ -156,7 +241,11 @@ $ connect_to_fargate.py
 ### 実行結果（例１ 引数なし）
 
 ```
-$ connect_to_fargate.py
+stg_fargate_connection.sh
+```
+
+```
+pro_fargate_connection.sh
 ```
 
 ```
@@ -217,7 +306,11 @@ Fargateからログアウトしました
 ### 実行結果（例２ 一部引数あり）
 
 ```
-$ connect_to_fargate.py --cluster=default --container=web
+stg_fargate_connection.sh --cluster=default --container=web
+```
+
+```
+pro_fargate_connection.sh --cluster=default --container=web
 ```
 
 ```
@@ -252,7 +345,7 @@ Fargateにログインします
 ### 実行結果（例３ fargatessh利用）
 
 ```
-$ fargatessh -p profile -c default -t app -f
+fargatessh -p profile -c default -t app -f
 ```
 
 ```
